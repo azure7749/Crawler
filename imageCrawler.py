@@ -42,24 +42,17 @@ async def scrape_images(session, url):
             image_name = image_url.split('/')[-1]
             await download_image(session, image_url, image_name)
 
-async def find_next_page(session, url):
-    html_content = await fetch(session, url)
-    if not html_content:
-        return None
-
-    soup = BeautifulSoup(html_content, 'html.parser')
+    # Find next page link
     nav_button = soup.find('a', class_='navigation_button navigation_right')
-    if nav_button:
-        return nav_button['href']
-    return None
+    next_page = nav_button['href'] if nav_button else None
+    return next_page
 
 async def main():
     async with aiohttp.ClientSession() as session:
         current_url = start_url
 
         while current_url:
-            tasks = [scrape_images(session, current_url), find_next_page(session, current_url)]
-            _, next_page = await asyncio.gather(*tasks)
+            next_page = await scrape_images(session, current_url)
 
             if not next_page:
                 print("No more pages to scrape.")
